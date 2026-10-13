@@ -1,0 +1,59 @@
+# OpenTOPAS v4.3.0 on top of the Geant4 11.4.2 image.
+#
+# Build:   docker build -f Dockerfile.topas -t opentopas .
+# Put extension .cc/.hh files in ./extensions (folder must exist, can be empty).
+
+FROM driegus/geant4_11p4p2:latest
+
+ARG TOPAS_VERSION=v4.3.0
+ARG GDCM_VERSION=2.6.8
+ARG JOBS=20
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    HOME=/home/topas
+ENV APPS=$HOME/Applications
+ENV Geant4_DIR=$APPS/GEANT4/geant4-install \
+    GDCM_DIR=$APPS/GDCM/gdcm-install
+
+# --- OpenTOPAS source (shallow clone of the tag only) ------------------------
+WORKDIR $APPS/TOPAS
+RUN git clone --depth 1 --branch ${TOPAS_VERSION} https://github.com/OpenTOPAS/OpenTOPAS.git
+
+# --- GDCM: build, install, delete source + build in the same layer ----------
+WORKDIR $APPS/GDCM
+RUN tar -xzf $APPS/TOPAS/OpenTOPAS/gdcm-${GDCM_VERSION}.tar.gz \
+    && mkdir gdcm-build \
+    && cd gdcm-build \
+    && cmake ../gdcm-${GDCM_VERSION} \
+         -DGDCM_BUILD_SHARED_LIBS=ON \
+         -DGDCM_BUILD_DOCBOOK_MANPAGES:BOOL=OFF \
+         -DCMAKE_INSTALL_PREFIX=$GDCM_DIR \
+    && make -j${JOBS} install \
+    && cd .. && rm -rf gdcm-build gdcm-${GDCM_VERSION}
+
+# --- Extensions (copied late so changing them only reruns the TOPAS build) ---
+COPY extensions/ $APPS/TOPAS/extensions/
+
+# --- OpenTOPAS: build, install, delete build dir in the same layer ----------
+WORKDIR $APPS/TOPAS
+RUN EXT_FLAG="" \
+    && if [ -n "$(find $APPS/TOPAS/extensions -name '*.cc' -print -quit)" ]; then \
+            EXT_FLAG="-DTOPAS_EXTENSIONS_DIR=$APPS/TOPAS/extensions"; \
+        fi \
+    && mkdir OpenTOPAS-build \
+    && cd OpenTOPAS-build \
+    && cmake ../OpenTOPAS \
+            -DCMAKE_INSTALL_PREFIX=$APPS/TOPAS/OpenTOPAS-install \
+            -DTOPAS_USE_QT=ON -DTOPAS_USE_QT6=ON \
+            $EXT_FLAG \
+    && make -j${JOBS} install \
+    && cd .. && rm -rf OpenTOPAS-build
+
+# --- Runtime environment (ENV persists; `export` inside RUN does not) -------
+ENV QT_QPA_PLATFORM_PLUGIN_PATH=$APPS/TOPAS/OpenTOPAS-install/Frameworks \
+    TOPAS_G4_DATA_DIR=$APPS/GEANT4/G4DATA \
+    LD_LIBRARY_PATH=$APPS/TOPAS/OpenTOPAS-install/lib:$APPS/GEANT4/geant4-install/lib:$APPS/GDCM/gdcm-install/lib \
+    PATH=$APPS/TOPAS/OpenTOPAS-install/bin:$PATH
+
+WORKDIR $HOME/WORKDIR
+CMD ["bash"]
