@@ -14,5 +14,5 @@ services:
       - DISPLAY=${DISPLAY}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./:/home/topas/WORKDIR      # current folder = your simulation folder
-    working_dir: /home/topas/WORKDIR
+      - ./:/home/topas/work      # current folder = your simulation folder
+    working_dir: /home/topas/work

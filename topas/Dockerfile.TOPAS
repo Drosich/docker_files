@@ -55,5 +55,5 @@ ENV QT_QPA_PLATFORM_PLUGIN_PATH=$APPS/TOPAS/OpenTOPAS-install/Frameworks \
     LD_LIBRARY_PATH=$APPS/TOPAS/OpenTOPAS-install/lib:$APPS/GEANT4/geant4-install/lib:$APPS/GDCM/gdcm-install/lib \
     PATH=$APPS/TOPAS/OpenTOPAS-install/bin:$PATH
 
-WORKDIR $HOME/WORKDIR
+WORKDIR $HOME/work
 CMD ["bash"]
