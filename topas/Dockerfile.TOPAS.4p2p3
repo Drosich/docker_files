@@ -3,9 +3,9 @@
 # Build:   docker build -f Dockerfile.topas -t opentopas .
 # Put extension .cc/.hh files in ./extensions (folder must exist, can be empty).
 
-FROM driegus/geant4_11p4p2:latest
+FROM driegus/geant4:11.3.2
 
-ARG TOPAS_VERSION=v4.3.0
+ARG TOPAS_VERSION=v4.2.3
 ARG GDCM_VERSION=2.6.8
 ARG JOBS=20
 

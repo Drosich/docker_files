@@ -7,7 +7,7 @@
 
 services:
   topas:
-    image: driegus/topas_4p3p0
+    image: driegus/topas:4.2.3
     stdin_open: true          # keep STDIN open (docker run -i)
     tty: true                 # allocate a terminal (docker run -t)
     environment:
